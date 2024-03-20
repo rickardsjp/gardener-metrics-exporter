@@ -2,6 +2,7 @@ package metrics
 
 const (
 	metricGardenProjectsStatus = "garden_projects_status"
+	metricGardenGardenInfo     = "garden_garden_info"
 	metricGardenUsersSum       = "garden_users_total"
 
 	// Seed metric

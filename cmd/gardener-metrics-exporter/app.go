@@ -13,8 +13,10 @@ import (
 	"github.com/gardener/gardener-metrics-exporter/pkg/metrics"
 	"github.com/gardener/gardener-metrics-exporter/pkg/server"
 	"github.com/gardener/gardener-metrics-exporter/pkg/version"
+	operatorv1alpha1 "github.com/gardener/gardener/pkg/apis/operator/v1alpha1"
 	clientset "github.com/gardener/gardener/pkg/client/core/clientset/versioned"
 	gardencoreinformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	seedmanagementclientset "github.com/gardener/gardener/pkg/client/seedmanagement/clientset/versioned"
 	gardenmanagedseedinformers "github.com/gardener/gardener/pkg/client/seedmanagement/informers/externalversions"
 
@@ -86,6 +88,17 @@ func run(ctx context.Context, o *options) error {
 	// Create informer factories to create informers.
 	gardenInformerFactory, gardenManagedSeedInformerFactory, err := setupInformerFactories(o.kubeconfigPath, stopCh)
 	if err != nil {
+		return err
+	}
+
+	gardenClient, err := kubernetes.NewClientFromFile("", o.kubeconfigPath)
+	if err != nil {
+		return err
+	}
+	gardenClient.WaitForCacheSync(ctx)
+
+	gardenList := &operatorv1alpha1.GardenList{}
+	if err := gardenClient.Client().List(context.Background(), gardenList); err != nil {
 		return err
 	}
 

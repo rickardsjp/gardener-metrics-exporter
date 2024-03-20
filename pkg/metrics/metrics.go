@@ -5,7 +5,10 @@
 package metrics
 
 import (
+	"context"
+
 	gardencoreinformers "github.com/gardener/gardener/pkg/client/core/informers/externalversions/core/v1beta1"
+	"github.com/gardener/gardener/pkg/client/kubernetes"
 	gardenmanagedseedinformers "github.com/gardener/gardener/pkg/client/seedmanagement/informers/externalversions/seedmanagement/v1alpha1"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,6 +17,17 @@ import (
 
 func getGardenMetricsDefinitions() map[string]*prometheus.Desc {
 	return map[string]*prometheus.Desc{
+		metricGardenGardenInfo: prometheus.NewDesc(
+			metricGardenManagedSeedInfo,
+			"Information about Garden resources.",
+			[]string{
+				"name",
+				"condition",
+				"operation",
+			},
+			nil,
+		),
+
 		metricGardenManagedSeedInfo: prometheus.NewDesc(
 			metricGardenManagedSeedInfo,
 			"Information about a managed seed.",
@@ -257,6 +271,8 @@ func getGardenMetricsDefinitions() map[string]*prometheus.Desc {
 }
 
 type gardenMetricsCollector struct {
+	ctx                   context.Context
+	client                kubernetes.Interface
 	managedSeedInformer   gardenmanagedseedinformers.ManagedSeedInformer
 	shootInformer         gardencoreinformers.ShootInformer
 	seedInformer          gardencoreinformers.SeedInformer
@@ -281,6 +297,7 @@ func (c *gardenMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 	c.collectProjectMetrics(ch)
 	c.collectShootMetrics(ch)
 	c.collectSeedMetrics(ch)
+	c.collectGardenMetrics(ch)
 }
 
 // SetupMetricsCollector takes informers to configure the metrics collectors.
